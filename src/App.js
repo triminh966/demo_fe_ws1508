@@ -1,43 +1,42 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
-import Customers from './Customers'
-import { BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-dom';
-import { w3cwebsocket as W3CWebSocket } from "websocket";
-
-const client = new W3CWebSocket('wss://nno8ermtec.execute-api.us-east-1.amazonaws.com/dev');
-
-class App extends Component {
-
-  componentWillMount() {
-    client.onopen = () => {
-      console.log('WebSocket Client Connected');
-    };
-    client.onmessage = (message) => {
-      console.log(message);
-    };
-  }
-
-  render() {
-    console.log("Host URL"+process.env.PUBLIC_URL);
-    return (
-
-      <Router basename={process.env.PUBLIC_URL}>
-        <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Simple React App</h1>
-        </header>
-          <Switch>
-                <Route exact path= "/" render={() => (
-                  <Redirect to="/customerlist"/>
-                )}/>
-                 <Route exact path='/customerlist' component={Customers} />
-          </Switch>
-      </div>
-    </Router>
-    );
-  }
+import React, {
+    Component
+} from 'react';
+import {
+    Button
+} from 'react-bootstrap';
+class Message extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            message: ''
+        };
+    }
+    doClick() {
+        if (this.connection.readyState === WebSocket.OPEN) {
+            console.log('connected, sending data');
+            this.connection.send(JSON.stringify({
+                action: "broadcast",
+                data: "hello from browser"
+            }));
+        } else {
+            console.log('not connected' + this.connection.readyState);
+        }
+    }
+    componentDidMount() {
+        this.connection = new WebSocket('wss://nno8ermtec.execute-api.us-east-1.amazonaws.com/dev');
+        this.connection.onmessage = evt => {
+            this.setState({
+                message: evt.data
+            })
+        };
+    }
+render() {
+        return (
+            <div>
+                <p>{this.state.message}</p>
+                <Button variant="primary" onClick={e=>this.doClick()}>Click</Button>
+            </div>
+        )
+    }
 }
-
-export default App;
+export default Message;
